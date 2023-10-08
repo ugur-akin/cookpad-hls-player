@@ -1,4 +1,5 @@
-import Hls, { Level } from "hls.js";
+/* eslint-disable react-hooks/exhaustive-deps */
+import Hls, { HlsListeners, Level } from "hls.js";
 import React, {
 	MouseEvent,
 	MouseEventHandler,
@@ -24,8 +25,6 @@ const HlsPlayer = ({ hls }: HlsPlayerProps) => {
 
 	useEffect(() => {
 		if (videoEl.current) {
-			// enableHlsEventLogging(hls);
-
 			hls.attachMedia(videoEl.current);
 			hls.loadSource(MEDIA_SOURCE);
 
@@ -385,18 +384,35 @@ const VideoQualitySelect: React.FC<VideoQualitySelectProps> = ({ hls }) => {
 	const [quality, setQuality] = useState(hls.currentLevel);
 	const [levels, setLevels] = useState<string[]>([]);
 
-	useEffect(() => {
-		hls.on(Hls.Events.LEVELS_UPDATED, (event, data) =>
-			setLevels(data.levels.map((level) => `${level.height}p`))
-		);
+	const updateLevels = (levels: Level[]) => {
+		const updatedLevels = levels.map((level) => `${level.height}p`);
+		setLevels(updatedLevels);
+	};
 
-		hls.on(Hls.Events.MANIFEST_PARSED, (event, data) =>
-			setLevels(data.levels.map((level) => `${level.height}p`))
-		);
+	useEffect(() => {
+		for (const EVENT of [
+			Hls.Events.LEVELS_UPDATED,
+			Hls.Events.MANIFEST_PARSED,
+			Hls.Events.MANIFEST_LOADED,
+			Hls.Events.LEVEL_LOADED,
+			Hls.Events.MEDIA_ATTACHED,
+		]) {
+			type EventType = typeof EVENT;
+			const eventListener: HlsListeners[EventType] = (
+				_: any,
+				data: { levels: Level[] }
+			) => updateLevels(data.levels);
+			hls.on<EventType>(EVENT, eventListener);
+		}
+
+		hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+			updateLevels(data.levels);
+		});
 	}, [hls]);
 
 	useEffect(() => {
 		hls.currentLevel = quality;
+		updateLevels(hls.levels);
 	}, [quality, hls]);
 
 	return (
@@ -405,8 +421,10 @@ const VideoQualitySelect: React.FC<VideoQualitySelectProps> = ({ hls }) => {
 			onChange={(e) => setQuality(parseInt(e.target.value))}
 		>
 			<option value={-1}>Auto</option>
-			{hls.levels.map((level, i) => (
-				<option key={level.name} value={i}>{`${level.height}p`}</option>
+			{levels.map((level, i) => (
+				<option key={level} value={i}>
+					{level}
+				</option>
 			))}
 		</select>
 	);
