@@ -2,13 +2,23 @@ import React from "react";
 import "./App.css";
 import { hls } from "./player/hlsClient";
 import HlsPlayer from "./player/hlsPlayer";
+import Doc from "./Doc";
 
 function App() {
 	return (
 		<div className="App">
-			<header className="App-header">
+			<div className="App-header">
 				<HlsPlayer hls={hls} />
-			</header>
+				<div
+					style={{
+						display: "flex",
+						alignItems: "center",
+						justifyContent: "center",
+					}}
+				>
+					<Doc />
+				</div>
+			</div>
 		</div>
 	);
 }
