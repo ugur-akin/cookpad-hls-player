@@ -1,25 +1,13 @@
 import React from "react";
-import "./App.css";
-import { hls } from "./player/hlsClient";
-import HlsPlayer from "./player/hlsPlayer";
-import Doc from "./Doc";
+import { Typography } from "@mui/material";
+import CookpadAppBar from "./header/CookpadAppBar";
 
 function App() {
 	return (
-		<div className="App">
-			<div className="App-header">
-				<HlsPlayer hls={hls} />
-				<div
-					style={{
-						display: "flex",
-						alignItems: "center",
-						justifyContent: "center",
-					}}
-				>
-					<Doc />
-				</div>
-			</div>
-		</div>
+		<>
+			<CookpadAppBar />
+			<Typography variant="h1">Hello World!</Typography>
+		</>
 	);
 }
 
