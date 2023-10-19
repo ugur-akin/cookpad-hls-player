@@ -2,6 +2,7 @@ import React from "react";
 import { Box, Container, Paper, Typography } from "@mui/material";
 import CookpadAppBar from "./header/CookpadAppBar";
 import HlsPlayerV2 from "./player/HlsPlayerV2";
+import { MediaSourceSelector } from "./config/MediaSourceSelector";
 
 function App() {
 	return (
@@ -19,6 +20,8 @@ function App() {
 					}}
 				>
 					<Typography variant="h3">Cookpad HLS Player</Typography>
+					<MediaSourceSelector />
+
 					<Box
 						sx={{
 							width: "100%",

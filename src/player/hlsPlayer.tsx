@@ -8,7 +8,6 @@ import React, {
 	useRef,
 	useState,
 } from "react";
-import { MEDIA_SOURCE } from "./config";
 import {
 	clamp,
 	getTimeRangesIndexContainingTime,
@@ -26,7 +25,7 @@ const HlsPlayer = ({ hls }: HlsPlayerProps) => {
 	useEffect(() => {
 		if (videoEl.current) {
 			hls.attachMedia(videoEl.current);
-			hls.loadSource(MEDIA_SOURCE);
+			// hls.loadSource(MEDIA_SOURCE);
 
 			hls.on(Hls.Events.MEDIA_ATTACHED, () => {
 				setIsReady(true);

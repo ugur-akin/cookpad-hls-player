@@ -1,4 +1,16 @@
-export const config = {
+import Hls from "hls.js";
+import React, {
+	PropsWithChildren,
+	createContext,
+	useContext,
+	useEffect,
+	useState,
+} from "react";
+import { useHLSConfigurationContext } from "./HLSConfigurationContext";
+
+/**
+ * Default HLS Config for reference (subject to change in future releases):
+ const config = {
 	autoStartLoad: true,
 	startPosition: -1,
 	debug: false,
@@ -69,8 +81,66 @@ export const config = {
 	drmSystemOptions: {},
 	cmcd: undefined,
 };
+ */
 
-export const MEDIA_SOURCE =
-	"https://d3ukqbhrqb4xnt.cloudfront.net/share_videos/6e95f9a732a74664a4982adf4b808500/e8ffab99-e494-495d-8b21-787e95f9672d/211115200114.m3u8";
+const hls = new Hls({
+	maxBufferHole: 0.1,
+	maxBufferSize: 225 * 1000 * 1000, // 225 MB, roughly the size of the cookpad video
+	highBufferWatchdogPeriod: 1, // TODO: Experiment
+});
 
-// export const MEDIA_SOURCE = "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
+interface HLSPlayerContext {
+	hls: Hls;
+	mediaEl?: HTMLVideoElement;
+	attachMedia: (el: HTMLVideoElement) => void;
+}
+
+const HLSPlayerContext = createContext<HLSPlayerContext | null>(null);
+
+export const HLSPlayerContextProvider: React.FC<PropsWithChildren> = ({
+	children,
+}) => {
+	const { source: mediaSource } = useHLSConfigurationContext();
+	const [mediaEl, setMediaEl] = useState<HTMLVideoElement>();
+
+	const attachMedia = (el: HTMLVideoElement) => setMediaEl(el);
+
+	const contextValue = {
+		hls,
+		mediaEl,
+		attachMedia,
+	};
+
+	// Attaches media whenever a new mediaElement is mounted
+	useEffect(() => {
+		if (mediaEl) {
+			hls.attachMedia(mediaEl);
+			return () => hls.detachMedia();
+		}
+
+		return undefined;
+	}, [mediaEl]);
+
+	// Loads HLS media source whenever source is updated
+	useEffect(() => {
+		hls.loadSource(mediaSource.source);
+	}, [mediaSource]);
+
+	return (
+		<HLSPlayerContext.Provider value={contextValue}>
+			{children}
+		</HLSPlayerContext.Provider>
+	);
+};
+
+export const useHLSPlayerContext = (): HLSPlayerContext => {
+	const hlsContext = useContext(HLSPlayerContext);
+
+	if (!hlsContext) {
+		throw new Error(
+			"HLS Player context is null. Please ensure the context is accessed within a provider."
+		);
+	}
+
+	return hlsContext;
+};
