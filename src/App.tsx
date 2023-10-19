@@ -1,12 +1,36 @@
 import React from "react";
-import { Typography } from "@mui/material";
+import { Box, Container, Paper, Typography } from "@mui/material";
 import CookpadAppBar from "./header/CookpadAppBar";
+import HlsPlayerV2 from "./player/HlsPlayerV2";
 
 function App() {
 	return (
 		<>
 			<CookpadAppBar />
-			<Typography variant="h1">Hello World!</Typography>
+			<Container maxWidth="lg" sx={{ paddingTop: 10 }}>
+				<Paper
+					elevation={2}
+					sx={{
+						width: "100%",
+						display: "flex",
+						flexDirection: "column",
+						padding: 5,
+						rowGap: 5,
+					}}
+				>
+					<Typography variant="h3">Cookpad HLS Player</Typography>
+					<Box
+						sx={{
+							width: "100%",
+							display: "flex",
+							justifyContent: "center",
+							alignItems: "center",
+						}}
+					>
+						<HlsPlayerV2 />
+					</Box>
+				</Paper>
+			</Container>
 		</>
 	);
 }
