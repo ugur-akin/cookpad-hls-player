@@ -7,7 +7,7 @@ import React, {
 	useState,
 } from "react";
 import { useHLSConfigurationContext } from "./HLSConfigurationContext";
-import { clamp } from "../utils";
+import { clamp, getTimeRangesIndexContainingTime } from "../utils";
 
 /**
  * Default HLS Config for reference (subject to change in future releases):
@@ -97,6 +97,8 @@ interface HLSPlayerContext {
 	isPlaying: boolean;
 	duration: number;
 	currentTime: number;
+	bufferedStart: number;
+	bufferedEnd: number;
 	playVideo: () => void;
 	pauseVideo: () => void;
 	rw10: () => void;
@@ -114,13 +116,20 @@ export const HLSPlayerContextProvider: React.FC<PropsWithChildren> = ({
 	const [isPlaying, setIsPlaying] = useState(false);
 	const [duration, setDuration] = useState(NaN);
 	const [currentTime, setCurrentTime] = useState(0);
+	const [bufferedStart, setBufferedStart] = useState(0);
+	const [bufferedEnd, setBufferedEnd] = useState(0);
 
 	const attachMedia = (el: HTMLVideoElement) => setMediaEl(el);
 
 	const playVideo = () => mediaEl?.play();
 	const pauseVideo = () => mediaEl?.pause();
+	const resetPlayer = () => {
+		setIsPlaying(false);
+		setCurrentTime(0);
+		setBufferedStart(0);
+		setBufferedEnd(0);
+	};
 
-	const resetCurrentTime = () => setCurrentTime(0);
 	const seekToPos = (pos: number) => {
 		if (isNaN(pos) || !mediaEl) {
 			return;
@@ -146,6 +155,8 @@ export const HLSPlayerContextProvider: React.FC<PropsWithChildren> = ({
 		isPlaying,
 		currentTime,
 		duration,
+		bufferedStart,
+		bufferedEnd,
 		playVideo,
 		pauseVideo,
 		ff10,
@@ -171,17 +182,34 @@ export const HLSPlayerContextProvider: React.FC<PropsWithChildren> = ({
 			setCurrentTime((prev) => (mediaEl && mediaEl.currentTime) || prev);
 		const updateDuration = () =>
 			setDuration((prev) => (mediaEl && mediaEl.duration) || prev);
+
+		const updateBufferTimes = () => {
+			if (mediaEl) {
+				const range = getTimeRangesIndexContainingTime(
+					mediaEl.currentTime,
+					mediaEl.buffered
+				);
+
+				if (!isNaN(range)) {
+					setBufferedStart(mediaEl.buffered.start(range));
+					setBufferedEnd(mediaEl.buffered.end(range));
+				}
+			}
+		};
+
 		if (mediaEl) {
 			mediaEl.addEventListener("play", updateReactStateToPlaying);
 			mediaEl.addEventListener("pause", updateReactStateToPaused);
 			mediaEl.addEventListener("timeupdate", updateCurrentTime);
 			mediaEl.addEventListener("durationchange", updateDuration);
+			mediaEl.addEventListener("progress", updateBufferTimes);
 
 			return () => {
 				mediaEl.removeEventListener("play", updateReactStateToPlaying);
 				mediaEl.removeEventListener("pause", updateReactStateToPaused);
 				mediaEl.removeEventListener("timeupdate", updateCurrentTime);
 				mediaEl.removeEventListener("durationchange", updateDuration);
+				mediaEl.removeEventListener("progress", updateBufferTimes);
 			};
 		}
 	}, [mediaEl]);
@@ -189,7 +217,7 @@ export const HLSPlayerContextProvider: React.FC<PropsWithChildren> = ({
 	// Loads HLS media source whenever source is updated
 	useEffect(() => {
 		hls.loadSource(mediaSource.source);
-		resetCurrentTime();
+		resetPlayer();
 	}, [mediaSource]);
 
 	return (

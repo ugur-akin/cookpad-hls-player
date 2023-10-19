@@ -26,7 +26,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({ show }) => {
 				justifyContent: "end",
 			}}
 		>
-			<ProgressSlider played={15} loadStart={0} loadEnd={45} total={150} />
+			<ProgressSlider />
 			<ControlButtons />
 		</Box>
 	);

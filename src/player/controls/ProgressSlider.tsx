@@ -1,22 +1,14 @@
 import { Box, BoxProps } from "@mui/material";
 import React, { MouseEventHandler, useEffect, useRef, useState } from "react";
 import { clamp, valOrDefaultIfNaN } from "../../utils";
+import { useHLSPlayerContext } from "../../context/HLSPlayerContext";
 
 const SLIDER_HOVER_DELAY = 150;
 
-export interface ProgressSliderProps extends BoxProps {
-	loadStart: number;
-	loadEnd: number;
-	played: number;
-	total: number;
-}
+export const ProgressSlider: React.FC = () => {
+	const { currentTime, duration, bufferedStart, bufferedEnd } =
+		useHLSPlayerContext();
 
-export const ProgressSlider: React.FC<ProgressSliderProps> = ({
-	loadStart,
-	loadEnd,
-	played,
-	total,
-}) => {
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const loadBarRef = useRef<HTMLDivElement | null>(null);
 
@@ -31,14 +23,13 @@ export const ProgressSlider: React.FC<ProgressSliderProps> = ({
 	};
 	const onStopHover = () => setLastStopHoverTimestamp(Date.now());
 	const onMouseMoveWhileHovering: MouseEventHandler = (event) => {
-		if (containerRef.current && loadBarRef.current) {
+		if (containerRef.current) {
 			const containerRect = containerRef.current.getBoundingClientRect();
-			const loadBarRect = loadBarRef.current.getBoundingClientRect();
 
-			const hoverRight = event.clientX - loadBarRect.left;
+			const hoverRight = event.clientX - containerRect.left;
 			const containerWidth = containerRect.right - containerRect.left;
 
-			const hoverEnd = (total / containerWidth) * hoverRight;
+			const hoverEnd = (duration / containerWidth) * hoverRight;
 			setHoveringLoadEnd(hoverEnd);
 		}
 	};
@@ -48,24 +39,25 @@ export const ProgressSlider: React.FC<ProgressSliderProps> = ({
 		return () => clearTimeout(t);
 	}, [lastStopHoverTimestamp]);
 
-	const loadBarLeftRatio = clamp((loadStart / total) * 100, 0, 100);
+	const loadBarLeftRatio = clamp((bufferedStart / duration) * 100, 0, 100);
 
 	const loadBarWidthRatio = clamp(
-		((loadEnd - loadStart) / total) * 100,
+		((bufferedEnd - bufferedStart) / duration) * 100,
 		0,
 		100
 	);
-	const loadBarHoverWidthRatio = ((hoveringLoadEnd - loadStart) / total) * 100;
+	const loadBarHoverWidthRatio =
+		((hoveringLoadEnd - bufferedStart) / duration) * 100;
 
 	const loadBarWidthRatioToUse = hovering
 		? clamp(loadBarHoverWidthRatio, loadBarWidthRatio, 100)
 		: loadBarWidthRatio;
 
-	const playedWidthRatio = clamp((played / total) * 100, 0, 100);
+	const playedWidthRatio = clamp((currentTime / duration) * 100, 0, 100);
 
 	const hoveredSx = {
 		cursor: "pointer",
-		transform: "scaleY(1.5)",
+		transform: "scaleY(1.75)",
 	};
 
 	return (
@@ -73,7 +65,7 @@ export const ProgressSlider: React.FC<ProgressSliderProps> = ({
 			id="progress-bar-controller"
 			ref={containerRef}
 			sx={{
-				height: 3.5,
+				height: 3,
 				width: "100%",
 				background: "rgba(230,230,230,0.5)",
 				position: "relative",
@@ -112,12 +104,13 @@ export const ProgressSlider: React.FC<ProgressSliderProps> = ({
 					position: "absolute",
 					left: `${valOrDefaultIfNaN(playedWidthRatio)}%`,
 					top: 0,
-					transform: "translate(-50%,-50%)",
-					width: 15,
-					height: 15,
+					width: 8,
+					height: 8,
 					borderRadius: "50%",
 					background: theme.palette.secondary.main,
-					...(hovering ? { transform: "scaleX(1.5) translateY(-50%)" } : {}),
+					visibility: hovering ? "visible" : "hidden",
+					transform:
+						"scaleX(1.75) translate(-50%, -50%) translate(1.5px, 1.5px)",
 				})}
 			/>
 		</Box>
