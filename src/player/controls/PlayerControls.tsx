@@ -3,17 +3,17 @@ import React from "react";
 import { ProgressSlider } from "./ProgressSlider";
 import { ControlButtons } from "./ControlButtons";
 
-export interface PlayerControls {
+export interface PlayerControlsProps {
 	show: boolean;
 }
 
-export const PlayerControls: React.FC<PlayerControls> = ({ show }) => {
+export const PlayerControls: React.FC<PlayerControlsProps> = ({ show }) => {
 	return (
 		<Box
 			id="controls-container"
 			sx={{
 				background:
-					"linear-gradient(0deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0) 52%)",
+					"linear-gradient(0deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.0) 40%)",
 				position: "absolute",
 				bottom: "0",
 				left: "0",
@@ -26,7 +26,7 @@ export const PlayerControls: React.FC<PlayerControls> = ({ show }) => {
 				justifyContent: "end",
 			}}
 		>
-			<ProgressSlider />
+			<ProgressSlider played={15} loadStart={0} loadEnd={45} total={150} />
 			<ControlButtons />
 		</Box>
 	);

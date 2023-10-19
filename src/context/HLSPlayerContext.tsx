@@ -101,6 +101,7 @@ interface HLSPlayerContext {
 	pauseVideo: () => void;
 	rw10: () => void;
 	ff10: () => void;
+	seekToPos: (pos: number) => void;
 }
 
 const HLSPlayerContext = createContext<HLSPlayerContext | null>(null);
@@ -120,6 +121,13 @@ export const HLSPlayerContextProvider: React.FC<PropsWithChildren> = ({
 	const pauseVideo = () => mediaEl?.pause();
 
 	const resetCurrentTime = () => setCurrentTime(0);
+	const seekToPos = (pos: number) => {
+		if (isNaN(pos) || !mediaEl) {
+			return;
+		}
+
+		mediaEl.currentTime = clamp(pos, 0, duration);
+	};
 	const seekToRelativePos = (delta: number) => {
 		if (isNaN(delta) || !mediaEl) {
 			return;
@@ -142,6 +150,7 @@ export const HLSPlayerContextProvider: React.FC<PropsWithChildren> = ({
 		pauseVideo,
 		ff10,
 		rw10,
+		seekToPos,
 	};
 
 	// Attaches media whenever a new mediaElement is mounted
@@ -154,15 +163,14 @@ export const HLSPlayerContextProvider: React.FC<PropsWithChildren> = ({
 		return undefined;
 	}, [mediaEl]);
 
-	// Attach listeners whenever a new mediaElement is mounted
+	// Attach media listeners whenever a new mediaElement is mounted
 	useEffect(() => {
 		const updateReactStateToPlaying = () => setIsPlaying(true);
 		const updateReactStateToPaused = () => setIsPlaying(false);
 		const updateCurrentTime = () =>
 			setCurrentTime((prev) => (mediaEl && mediaEl.currentTime) || prev);
-		const updateDuration = () => {
+		const updateDuration = () =>
 			setDuration((prev) => (mediaEl && mediaEl.duration) || prev);
-		};
 		if (mediaEl) {
 			mediaEl.addEventListener("play", updateReactStateToPlaying);
 			mediaEl.addEventListener("pause", updateReactStateToPaused);

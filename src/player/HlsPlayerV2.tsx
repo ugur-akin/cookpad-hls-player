@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
-import { PlayerControls } from "./controls/ControlsContainer";
+import React, { useEffect, useRef } from "react";
+import { PlayerControls } from "./controls/PlayerControls";
 import VideoInteractions from "./feedback/VideoInteractions";
 import { useHLSPlayerContext } from "../context/HLSPlayerContext";
 

@@ -9,7 +9,7 @@ export const secondsToTimeDisplayFormat = (inputSeconds: number): string => {
 	}
 
 	const minutes = Math.trunc(inputSeconds / 60);
-	const seconds = Math.trunc(inputSeconds % 60);
+	const seconds = Math.round(inputSeconds % 60);
 
 	const minutesStr = String(minutes).padStart(2, "0");
 	const secondsStr = String(seconds).padStart(2, "0");
@@ -20,6 +20,13 @@ export const secondsToTimeDisplayFormat = (inputSeconds: number): string => {
 
 export const clamp = (val: number, min: number, max: number) => {
 	return Math.min(max, Math.max(val, min));
+};
+
+export const valOrDefaultIfNaN = (
+	val: number,
+	defaultVal: number = 0
+): number => {
+	return isNaN(val) ? defaultVal : val;
 };
 
 export const getTimeRangesIndexContainingTime = (
