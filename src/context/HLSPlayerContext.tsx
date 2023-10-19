@@ -7,6 +7,7 @@ import React, {
 	useState,
 } from "react";
 import { useHLSConfigurationContext } from "./HLSConfigurationContext";
+import { clamp } from "../utils";
 
 /**
  * Default HLS Config for reference (subject to change in future releases):
@@ -98,6 +99,8 @@ interface HLSPlayerContext {
 	currentTime: number;
 	playVideo: () => void;
 	pauseVideo: () => void;
+	rw10: () => void;
+	ff10: () => void;
 }
 
 const HLSPlayerContext = createContext<HLSPlayerContext | null>(null);
@@ -116,14 +119,17 @@ export const HLSPlayerContextProvider: React.FC<PropsWithChildren> = ({
 	const playVideo = () => mediaEl?.play();
 	const pauseVideo = () => mediaEl?.pause();
 
-	const updateReactStateToPlaying = () => setIsPlaying(true);
-	const updateReactStateToPaused = () => setIsPlaying(false);
-	const updateCurrentTime = () =>
-		setCurrentTime((prev) => (mediaEl && mediaEl.currentTime) || prev);
 	const resetCurrentTime = () => setCurrentTime(0);
-	const updateDuration = () => {
-		setDuration((prev) => (mediaEl && mediaEl.duration) || prev);
+	const seekToRelativePos = (delta: number) => {
+		if (isNaN(delta) || !mediaEl) {
+			return;
+		}
+
+		mediaEl.currentTime = clamp(mediaEl.currentTime + delta, 0, duration);
 	};
+
+	const ff10 = () => seekToRelativePos(10);
+	const rw10 = () => seekToRelativePos(-10);
 
 	const contextValue = {
 		hls,
@@ -134,6 +140,8 @@ export const HLSPlayerContextProvider: React.FC<PropsWithChildren> = ({
 		duration,
 		playVideo,
 		pauseVideo,
+		ff10,
+		rw10,
 	};
 
 	// Attaches media whenever a new mediaElement is mounted
@@ -148,6 +156,13 @@ export const HLSPlayerContextProvider: React.FC<PropsWithChildren> = ({
 
 	// Attach listeners whenever a new mediaElement is mounted
 	useEffect(() => {
+		const updateReactStateToPlaying = () => setIsPlaying(true);
+		const updateReactStateToPaused = () => setIsPlaying(false);
+		const updateCurrentTime = () =>
+			setCurrentTime((prev) => (mediaEl && mediaEl.currentTime) || prev);
+		const updateDuration = () => {
+			setDuration((prev) => (mediaEl && mediaEl.duration) || prev);
+		};
 		if (mediaEl) {
 			mediaEl.addEventListener("play", updateReactStateToPlaying);
 			mediaEl.addEventListener("pause", updateReactStateToPaused);
