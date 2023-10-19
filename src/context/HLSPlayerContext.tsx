@@ -94,6 +94,8 @@ interface HLSPlayerContext {
 	mediaEl?: HTMLVideoElement;
 	attachMedia: (el: HTMLVideoElement) => void;
 	isPlaying: boolean;
+	duration: number;
+	currentTime: number;
 	playVideo: () => void;
 	pauseVideo: () => void;
 }
@@ -106,6 +108,8 @@ export const HLSPlayerContextProvider: React.FC<PropsWithChildren> = ({
 	const { source: mediaSource } = useHLSConfigurationContext();
 	const [mediaEl, setMediaEl] = useState<HTMLVideoElement>();
 	const [isPlaying, setIsPlaying] = useState(false);
+	const [duration, setDuration] = useState(NaN);
+	const [currentTime, setCurrentTime] = useState(0);
 
 	const attachMedia = (el: HTMLVideoElement) => setMediaEl(el);
 
@@ -113,15 +117,21 @@ export const HLSPlayerContextProvider: React.FC<PropsWithChildren> = ({
 	const pauseVideo = () => mediaEl?.pause();
 
 	const updateReactStateToPlaying = () => setIsPlaying(true);
-	// const updateReactStateToPlaying = () => console.log("play fired");
 	const updateReactStateToPaused = () => setIsPlaying(false);
-	// const updateReactStateToPaused = () => console.log("pause fired");
+	const updateCurrentTime = () =>
+		setCurrentTime((prev) => (mediaEl && mediaEl.currentTime) || prev);
+	const resetCurrentTime = () => setCurrentTime(0);
+	const updateDuration = () => {
+		setDuration((prev) => (mediaEl && mediaEl.duration) || prev);
+	};
 
 	const contextValue = {
 		hls,
 		mediaEl,
 		attachMedia,
 		isPlaying,
+		currentTime,
+		duration,
 		playVideo,
 		pauseVideo,
 	};
@@ -141,10 +151,14 @@ export const HLSPlayerContextProvider: React.FC<PropsWithChildren> = ({
 		if (mediaEl) {
 			mediaEl.addEventListener("play", updateReactStateToPlaying);
 			mediaEl.addEventListener("pause", updateReactStateToPaused);
+			mediaEl.addEventListener("timeupdate", updateCurrentTime);
+			mediaEl.addEventListener("durationchange", updateDuration);
 
 			return () => {
 				mediaEl.removeEventListener("play", updateReactStateToPlaying);
 				mediaEl.removeEventListener("pause", updateReactStateToPaused);
+				mediaEl.removeEventListener("timeupdate", updateCurrentTime);
+				mediaEl.removeEventListener("durationchange", updateDuration);
 			};
 		}
 	}, [mediaEl]);
@@ -152,6 +166,7 @@ export const HLSPlayerContextProvider: React.FC<PropsWithChildren> = ({
 	// Loads HLS media source whenever source is updated
 	useEffect(() => {
 		hls.loadSource(mediaSource.source);
+		resetCurrentTime();
 	}, [mediaSource]);
 
 	return (

@@ -8,6 +8,7 @@ import Forward10Icon from "@mui/icons-material/Forward10";
 import QualityLevelIcon from "@mui/icons-material/Tune";
 import VolumeUpIcon from "@mui/icons-material/VolumeUp";
 import { useHLSPlayerContext } from "../../context/HLSPlayerContext";
+import TimeDisplay from "../common/TimeDisplay";
 
 const DEFAULT_STACK_PROPS: Partial<StackProps> = {
 	id: "control-buttons-container",
@@ -27,7 +28,8 @@ export const ControlButtons: React.FC<ControlButtonsProps> = ({
 }) => {
 	// TODO: Use interaction hooks to implement functionality
 
-	const { isPlaying, playVideo, pauseVideo } = useHLSPlayerContext();
+	const { isPlaying, currentTime, duration, playVideo, pauseVideo } =
+		useHLSPlayerContext();
 
 	const PlayButtonIcon = isPlaying ? PauseIcon : PlayIcon;
 	const onTogglePlayingState = isPlaying ? pauseVideo : playVideo;
@@ -43,6 +45,7 @@ export const ControlButtons: React.FC<ControlButtonsProps> = ({
 			/>
 			<ControlButton IconComponent={Replay10Icon} />
 			<ControlButton IconComponent={Forward10Icon} />
+			<TimeDisplay currentTime={currentTime} duration={duration} />
 			<ControlButton
 				sx={{
 					marginLeft: "auto",

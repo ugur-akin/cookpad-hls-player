@@ -4,6 +4,10 @@ export const hlsSupportCheck = (): string =>
 	Hls.isSupported() ? "HLS is supported" : "HLS is not supported";
 
 export const secondsToTimeDisplayFormat = (inputSeconds: number): string => {
+	if (isNaN(inputSeconds)) {
+		return "00:00";
+	}
+
 	const minutes = Math.trunc(inputSeconds / 60);
 	const seconds = Math.trunc(inputSeconds % 60);
 
