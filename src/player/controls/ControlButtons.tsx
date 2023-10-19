@@ -7,6 +7,7 @@ import Replay10Icon from "@mui/icons-material/Replay10";
 import Forward10Icon from "@mui/icons-material/Forward10";
 import QualityLevelIcon from "@mui/icons-material/Tune";
 import VolumeUpIcon from "@mui/icons-material/VolumeUp";
+import { useHLSPlayerContext } from "../../context/HLSPlayerContext";
 
 const DEFAULT_STACK_PROPS: Partial<StackProps> = {
 	id: "control-buttons-container",
@@ -25,7 +26,11 @@ export const ControlButtons: React.FC<ControlButtonsProps> = ({
 	...stackPropsOverrides
 }) => {
 	// TODO: Use interaction hooks to implement functionality
-	// TODO: Re-implement toggle of play/pause button icon
+
+	const { isPlaying, playVideo, pauseVideo } = useHLSPlayerContext();
+
+	const PlayButtonIcon = isPlaying ? PauseIcon : PlayIcon;
+	const onTogglePlayingState = isPlaying ? pauseVideo : playVideo;
 
 	const propsWithOverrides = { ...DEFAULT_STACK_PROPS, ...stackPropsOverrides };
 	const sxWithOverrides = { ...DEFAULT_SX, ...sx };
@@ -33,8 +38,8 @@ export const ControlButtons: React.FC<ControlButtonsProps> = ({
 	return (
 		<Stack sx={sxWithOverrides} {...propsWithOverrides}>
 			<ControlButton
-				IconComponent={PlayIcon}
-				// onClick={onTogglePlayingState}
+				IconComponent={PlayButtonIcon}
+				onClick={onTogglePlayingState}
 			/>
 			<ControlButton IconComponent={Replay10Icon} />
 			<ControlButton IconComponent={Forward10Icon} />

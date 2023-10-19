@@ -93,6 +93,9 @@ interface HLSPlayerContext {
 	hls: Hls;
 	mediaEl?: HTMLVideoElement;
 	attachMedia: (el: HTMLVideoElement) => void;
+	isPlaying: boolean;
+	playVideo: () => void;
+	pauseVideo: () => void;
 }
 
 const HLSPlayerContext = createContext<HLSPlayerContext | null>(null);
@@ -102,13 +105,25 @@ export const HLSPlayerContextProvider: React.FC<PropsWithChildren> = ({
 }) => {
 	const { source: mediaSource } = useHLSConfigurationContext();
 	const [mediaEl, setMediaEl] = useState<HTMLVideoElement>();
+	const [isPlaying, setIsPlaying] = useState(false);
 
 	const attachMedia = (el: HTMLVideoElement) => setMediaEl(el);
+
+	const playVideo = () => mediaEl?.play();
+	const pauseVideo = () => mediaEl?.pause();
+
+	const updateReactStateToPlaying = () => setIsPlaying(true);
+	// const updateReactStateToPlaying = () => console.log("play fired");
+	const updateReactStateToPaused = () => setIsPlaying(false);
+	// const updateReactStateToPaused = () => console.log("pause fired");
 
 	const contextValue = {
 		hls,
 		mediaEl,
 		attachMedia,
+		isPlaying,
+		playVideo,
+		pauseVideo,
 	};
 
 	// Attaches media whenever a new mediaElement is mounted
@@ -119,6 +134,19 @@ export const HLSPlayerContextProvider: React.FC<PropsWithChildren> = ({
 		}
 
 		return undefined;
+	}, [mediaEl]);
+
+	// Attach listeners whenever a new mediaElement is mounted
+	useEffect(() => {
+		if (mediaEl) {
+			mediaEl.addEventListener("play", updateReactStateToPlaying);
+			mediaEl.addEventListener("pause", updateReactStateToPaused);
+
+			return () => {
+				mediaEl.removeEventListener("play", updateReactStateToPlaying);
+				mediaEl.removeEventListener("pause", updateReactStateToPaused);
+			};
+		}
 	}, [mediaEl]);
 
 	// Loads HLS media source whenever source is updated
