@@ -1,25 +1,40 @@
 import React from "react";
-import "./App.css";
-import { hls } from "./player/hlsClient";
-import HlsPlayer from "./player/hlsPlayer";
-import Doc from "./Doc";
+import { Box, Container, Paper, Typography } from "@mui/material";
+import CookpadAppBar from "./header/CookpadAppBar";
+import Player from "./player/Player";
+import { MediaSourceSelector } from "./config/MediaSourceSelector";
 
 function App() {
 	return (
-		<div className="App">
-			<div className="App-header">
-				<HlsPlayer hls={hls} />
-				<div
-					style={{
+		<>
+			<CookpadAppBar />
+			<Container maxWidth="lg" sx={{ paddingTop: 10 }}>
+				<Paper
+					elevation={2}
+					sx={{
+						width: "100%",
 						display: "flex",
-						alignItems: "center",
-						justifyContent: "center",
+						flexDirection: "column",
+						padding: 5,
+						rowGap: 5,
 					}}
 				>
-					<Doc />
-				</div>
-			</div>
-		</div>
+					<Typography variant="h3">Cookpad HLS Player</Typography>
+					<MediaSourceSelector />
+
+					<Box
+						sx={{
+							width: "100%",
+							display: "flex",
+							justifyContent: "center",
+							alignItems: "center",
+						}}
+					>
+						<Player />
+					</Box>
+				</Paper>
+			</Container>
+		</>
 	);
 }
 
