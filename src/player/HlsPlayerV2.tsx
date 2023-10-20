@@ -27,10 +27,6 @@ const HlsPlayerV2 = () => {
 				position: "relative",
 				width: PLAYER_WIDTH,
 				height: PLAYER_HEIGHT,
-				cursor: showControls ? "default" : "none",
-				"*": {
-					cursor: showControls ? "default" : "none",
-				},
 			}}
 			onMouseMove={triggerInteraction}
 		>
@@ -42,7 +38,7 @@ const HlsPlayerV2 = () => {
 			>
 				<source src="https://placehold.co/1920x1080.mp4" type="video/mp4" />
 			</video>
-			<VideoInteractionsContainer />
+			<VideoInteractionsContainer hideCursor={!showControls} />
 			<PlayerControls show={showControls} />
 		</Box>
 	);

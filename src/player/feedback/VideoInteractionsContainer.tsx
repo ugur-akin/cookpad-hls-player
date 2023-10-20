@@ -2,7 +2,13 @@ import { Box } from "@mui/material";
 import React, { KeyboardEventHandler, MouseEventHandler } from "react";
 import { useHLSPlayerContext } from "../../context/HLSPlayerContext";
 
-export const VideoInteractionsContainer = () => {
+export interface VideoInteractionsContainerProps {
+	hideCursor: boolean;
+}
+
+export const VideoInteractionsContainer: React.FC<
+	VideoInteractionsContainerProps
+> = ({ hideCursor }) => {
 	//TODO: Use hooks to determine and show interaction feedback
 
 	const { isPlaying, playVideo, pauseVideo, rw10, ff10 } =
@@ -37,6 +43,7 @@ export const VideoInteractionsContainer = () => {
 				width: "100%",
 				height: "100%",
 				background: "transparent",
+				cursor: hideCursor ? "none" : "default",
 			}}
 			onKeyDown={handleKeyDown}
 			onClick={handleOnClick}

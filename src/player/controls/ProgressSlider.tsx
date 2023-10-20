@@ -3,16 +3,20 @@ import React, { MouseEventHandler, useEffect, useRef, useState } from "react";
 import { clamp, valOrDefaultIfNaN } from "../../utils";
 import { useHLSPlayerContext } from "../../context/HLSPlayerContext";
 
-const SLIDER_HOVER_DELAY = 150;
+const SLIDER_STOP_HOVER_DELAY = 150;
 
 export const ProgressSlider: React.FC = () => {
-	const { currentTime, duration, bufferedStart, bufferedEnd } =
+	const { currentTime, duration, bufferedStart, bufferedEnd, seekToPos } =
 		useHLSPlayerContext();
 
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const loadBarRef = useRef<HTMLDivElement | null>(null);
 
-	const [hovering, setHovering] = useState(false);
+	const [isDragging, setIsDragging] = useState(false);
+	const [dragEnd, setDragEnd] = useState(NaN);
+	const [isSliderSyncing, setIsSliderSyncing] = useState(true);
+
+	const [isHovering, setHovering] = useState(false);
 	const [lastStopHoverTimestamp, setLastStopHoverTimestamp] = useState(
 		Date.now()
 	);
@@ -34,10 +38,67 @@ export const ProgressSlider: React.FC = () => {
 		}
 	};
 
+	// Effect to add a delay before "un-hover"ing progress bar (de-scales back to original size)
 	useEffect(() => {
-		const t = setTimeout(() => setHovering(false), SLIDER_HOVER_DELAY);
+		const t = setTimeout(() => setHovering(false), SLIDER_STOP_HOVER_DELAY);
 		return () => clearTimeout(t);
 	}, [lastStopHoverTimestamp]);
+
+	const startDragging: MouseEventHandler = (event) => {
+		event.preventDefault();
+		setIsDragging(true);
+		setIsSliderSyncing(false);
+
+		if (containerRef.current) {
+			const containerRect = containerRef.current.getBoundingClientRect();
+
+			const dragRight = event.clientX - containerRect.left;
+			const containerWidth = containerRect.right - containerRect.left;
+
+			const dragEnd = (duration / containerWidth) * dragRight;
+			setDragEnd(dragEnd);
+		}
+	};
+
+	// Effect to attach listeners to window while dragging:
+	//	Listening to mouse move all over the page provides smoother dragging experience
+	useEffect(() => {
+		const onMouseMoveWhileDragging = (event: MouseEvent) => {
+			if (isDragging && containerRef.current) {
+				const containerRect = containerRef.current.getBoundingClientRect();
+
+				const dragRight = event.clientX - containerRect.left;
+				const containerWidth = containerRect.right - containerRect.left;
+
+				const dragEnd = (duration / containerWidth) * dragRight;
+				setDragEnd(dragEnd);
+			}
+		};
+
+		const stopDragging = () => {
+			seekToPos(dragEnd);
+			setIsDragging(false);
+		};
+
+		if (isDragging) {
+			window.addEventListener("mousemove", onMouseMoveWhileDragging);
+			window.addEventListener("mouseup", stopDragging);
+
+			return () => {
+				window.removeEventListener("mousemove", onMouseMoveWhileDragging);
+				window.removeEventListener("mouseup", stopDragging);
+			};
+		}
+	}, [isDragging, containerRef, dragEnd, duration, seekToPos]);
+
+	// Effect to end dragging and start syncing progress to playtime
+	useEffect(() => {
+		if (!isDragging && !isSliderSyncing) {
+			setIsSliderSyncing(true);
+		}
+	}, [currentTime]);
+
+	// -- Width/left ratios --
 
 	const loadBarLeftRatio = clamp((bufferedStart / duration) * 100, 0, 100);
 
@@ -50,16 +111,17 @@ export const ProgressSlider: React.FC = () => {
 	const loadBarHoverWidthRatio =
 		((hoveringLoadEnd - bufferedStart) / duration) * 100;
 
-	const loadBarWidthRatioToUse = hovering
+	const loadBarWidthRatioToUse = isHovering
 		? clamp(loadBarHoverWidthRatio, loadBarWidthRatio, 100)
 		: loadBarWidthRatio;
 
 	const playedWidthRatio = clamp((currentTime / duration) * 100, 0, 100);
+	const dragWidthRatio = clamp((dragEnd / duration) * 100, 0, 100);
+	const playedWidthRatioToUse = isSliderSyncing
+		? playedWidthRatio
+		: dragWidthRatio;
 
-	const hoveredSx = {
-		cursor: "pointer",
-		transform: "scaleY(1.75)",
-	};
+	const isActive = isHovering || isDragging;
 
 	return (
 		<Box
@@ -70,11 +132,16 @@ export const ProgressSlider: React.FC = () => {
 				width: "100%",
 				background: "rgba(230,230,230,0.5)",
 				position: "relative",
-				...(hovering ? { ...hoveredSx } : {}),
+				transform: isActive ? "scaleY(1.75)" : "none",
+				cursor: "pointer",
+				"*": {
+					cursor: "pointer",
+				},
 			}}
 			onMouseEnter={onHover}
 			onMouseLeave={onStopHover}
 			onMouseMove={onMouseMoveWhileHovering}
+			onMouseDown={startDragging}
 		>
 			<Box
 				id="progress-bar-loaded"
@@ -92,7 +159,7 @@ export const ProgressSlider: React.FC = () => {
 				id="progress-bar-played"
 				sx={(theme) => ({
 					height: "100%",
-					width: `${valOrDefaultIfNaN(playedWidthRatio)}%`,
+					width: `${valOrDefaultIfNaN(playedWidthRatioToUse)}%`,
 					background: theme.palette.secondary.main,
 					position: "absolute",
 					left: 0,
@@ -104,12 +171,12 @@ export const ProgressSlider: React.FC = () => {
 				sx={(theme) => ({
 					position: "absolute",
 					top: 0,
-					left: `${valOrDefaultIfNaN(playedWidthRatio)}%`,
+					left: `${valOrDefaultIfNaN(playedWidthRatioToUse)}%`,
 					width: 8,
 					height: 8,
 					borderRadius: "50%",
 					background: theme.palette.secondary.main,
-					visibility: hovering ? "visible" : "hidden",
+					visibility: isActive ? "visible" : "hidden",
 					transform:
 						"scaleX(1.75) translate(-50%, -50%) translate(1.5px, 1.5px)",
 				})}
