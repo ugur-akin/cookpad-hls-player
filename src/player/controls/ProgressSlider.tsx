@@ -1,4 +1,4 @@
-import { Box, BoxProps } from "@mui/material";
+import { Box } from "@mui/material";
 import React, { MouseEventHandler, useEffect, useRef, useState } from "react";
 import { clamp, valOrDefaultIfNaN } from "../../utils";
 import { useHLSPlayerContext } from "../../context/HLSPlayerContext";
@@ -46,6 +46,7 @@ export const ProgressSlider: React.FC = () => {
 		0,
 		100
 	);
+
 	const loadBarHoverWidthRatio =
 		((hoveringLoadEnd - bufferedStart) / duration) * 100;
 
@@ -102,8 +103,8 @@ export const ProgressSlider: React.FC = () => {
 				id="progress-bar-slider"
 				sx={(theme) => ({
 					position: "absolute",
-					left: `${valOrDefaultIfNaN(playedWidthRatio)}%`,
 					top: 0,
+					left: `${valOrDefaultIfNaN(playedWidthRatio)}%`,
 					width: 8,
 					height: 8,
 					borderRadius: "50%",

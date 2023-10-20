@@ -1,26 +1,17 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import { PlayerControls } from "./controls/PlayerControls";
-import VideoInteractions from "./feedback/VideoInteractions";
+import { VideoInteractionsContainer } from "./feedback/VideoInteractionsContainer";
 import { useHLSPlayerContext } from "../context/HLSPlayerContext";
-
-const FADE_TIMEOUT = 2000;
+import { Box } from "@mui/material";
 
 const PLAYER_RATIO = 750 / 1920;
 const PLAYER_WIDTH = 1920 * PLAYER_RATIO;
 const PLAYER_HEIGHT = 1080 * PLAYER_RATIO;
 
 const HlsPlayerV2 = () => {
-	const { attachMedia, isPlaying } = useHLSPlayerContext();
+	const { attachMedia, isPlaying, recentlyInteracted, triggerInteraction } =
+		useHLSPlayerContext();
 	const playerRef = useRef<HTMLVideoElement>(null);
-	const [showControls, setShowControls] = useState(false);
-
-	const updateLastInteractionTime = () => {
-		setShowControls(true);
-	};
-
-	const hideControls = () => {
-		setShowControls(false);
-	};
 
 	useEffect(() => {
 		if (playerRef.current) {
@@ -28,25 +19,20 @@ const HlsPlayerV2 = () => {
 		}
 	}, [attachMedia, playerRef]);
 
-	useEffect(() => {
-		if (showControls) {
-			const t = setTimeout(hideControls, FADE_TIMEOUT);
-
-			return () => clearTimeout(t);
-		}
-
-		return undefined;
-	}, [showControls]);
+	const showControls = recentlyInteracted || !isPlaying;
 
 	return (
-		<div
-			style={{
-				backgroundColor: "lightblue",
+		<Box
+			sx={{
 				position: "relative",
 				width: PLAYER_WIDTH,
 				height: PLAYER_HEIGHT,
+				cursor: showControls ? "default" : "none",
+				"*": {
+					cursor: showControls ? "default" : "none",
+				},
 			}}
-			onMouseMove={updateLastInteractionTime}
+			onMouseMove={triggerInteraction}
 		>
 			<video
 				width={PLAYER_WIDTH}
@@ -56,9 +42,9 @@ const HlsPlayerV2 = () => {
 			>
 				<source src="https://placehold.co/1920x1080.mp4" type="video/mp4" />
 			</video>
-			<VideoInteractions />
-			<PlayerControls show={showControls || !isPlaying} />
-		</div>
+			<VideoInteractionsContainer />
+			<PlayerControls show={showControls} />
+		</Box>
 	);
 };
 

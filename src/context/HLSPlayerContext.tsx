@@ -90,6 +90,8 @@ const hls = new Hls({
 	highBufferWatchdogPeriod: 1, // TODO: Experiment
 });
 
+const RECENT_INTERACTION_THRESHOLD_SECONDS = 2000;
+
 interface HLSPlayerContext {
 	hls: Hls;
 	mediaEl?: HTMLVideoElement;
@@ -99,11 +101,13 @@ interface HLSPlayerContext {
 	currentTime: number;
 	bufferedStart: number;
 	bufferedEnd: number;
+	recentlyInteracted: boolean;
 	playVideo: () => void;
 	pauseVideo: () => void;
 	rw10: () => void;
 	ff10: () => void;
 	seekToPos: (pos: number) => void;
+	triggerInteraction: () => void;
 }
 
 const HLSPlayerContext = createContext<HLSPlayerContext | null>(null);
@@ -119,25 +123,48 @@ export const HLSPlayerContextProvider: React.FC<PropsWithChildren> = ({
 	const [bufferedStart, setBufferedStart] = useState(0);
 	const [bufferedEnd, setBufferedEnd] = useState(0);
 
+	const [recentlyInteracted, setRecentlyInteracted] = useState(false);
+	const [latestInteractionDate, setLatestInteractionDate] = useState(0);
+
+	const triggerInteraction = () => setLatestInteractionDate(Date.now());
+
+	// Effect to update recentlyInteracted flag whenever an interaction is fired.
+	useEffect(() => {
+		const unsetRecentlyInteracted = () => setRecentlyInteracted(false);
+
+		setRecentlyInteracted(true);
+		const t = setTimeout(
+			unsetRecentlyInteracted,
+			RECENT_INTERACTION_THRESHOLD_SECONDS
+		);
+		return () => clearTimeout(t);
+	}, [latestInteractionDate]);
+
 	const attachMedia = (el: HTMLVideoElement) => setMediaEl(el);
 
-	const playVideo = () => mediaEl?.play();
-	const pauseVideo = () => mediaEl?.pause();
-	const resetPlayer = () => {
-		setIsPlaying(false);
-		setCurrentTime(0);
-		setBufferedStart(0);
-		setBufferedEnd(0);
+	const playVideo = () => {
+		triggerInteraction();
+		mediaEl?.play();
+	};
+
+	const pauseVideo = () => {
+		triggerInteraction();
+		mediaEl?.pause();
 	};
 
 	const seekToPos = (pos: number) => {
+		triggerInteraction();
+
 		if (isNaN(pos) || !mediaEl) {
 			return;
 		}
 
 		mediaEl.currentTime = clamp(pos, 0, duration);
 	};
+
 	const seekToRelativePos = (delta: number) => {
+		triggerInteraction();
+
 		if (isNaN(delta) || !mediaEl) {
 			return;
 		}
@@ -157,11 +184,13 @@ export const HLSPlayerContextProvider: React.FC<PropsWithChildren> = ({
 		duration,
 		bufferedStart,
 		bufferedEnd,
+		recentlyInteracted,
 		playVideo,
 		pauseVideo,
 		ff10,
 		rw10,
 		seekToPos,
+		triggerInteraction,
 	};
 
 	// Attaches media whenever a new mediaElement is mounted
@@ -216,6 +245,14 @@ export const HLSPlayerContextProvider: React.FC<PropsWithChildren> = ({
 
 	// Loads HLS media source whenever source is updated
 	useEffect(() => {
+		const resetPlayer = () => {
+			setIsPlaying(false);
+			setCurrentTime(0);
+			setBufferedStart(0);
+			setBufferedEnd(0);
+			triggerInteraction();
+		};
+
 		hls.loadSource(mediaSource.source);
 		resetPlayer();
 	}, [mediaSource]);
