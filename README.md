@@ -1,17 +1,11 @@
 TODO:
 
-- For Tomorrow:
-
-  - Move interaction timer to context
-  - Move key event listeners to body
-  - Add feedback elements (optional)
-  - Finish slider (seek to pos + slide)
-  - Add quality levels
-  - Test backbuffer
-
-- Video shortcut handler (click/spacebar to play/pause, arrows to rw/ff, up/down volume)
-- Quality selection
-- Volume
+- Test backbuffer
+- Add KeyDown event listeners to body (click/spacebar to play/pause, arrows to rw/ff, up/down volume)
+- Add feedback elements loading + video interactions (optional)
+- Volume (optional)
+- Resonsive playersize (optional)
+- Full-screen
 - Animations
+- Split up context (media, play status, time/duration...)
 - Performance analysis and memoization
-- Split up context (media, play status, time/duration)

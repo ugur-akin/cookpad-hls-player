@@ -8,7 +8,7 @@ const PLAYER_RATIO = 750 / 1920;
 const PLAYER_WIDTH = 1920 * PLAYER_RATIO;
 const PLAYER_HEIGHT = 1080 * PLAYER_RATIO;
 
-const HlsPlayerV2 = () => {
+const Player = () => {
 	const { attachMedia, isPlaying, recentlyInteracted, triggerInteraction } =
 		useHLSPlayerContext();
 	const playerRef = useRef<HTMLVideoElement>(null);
@@ -44,4 +44,4 @@ const HlsPlayerV2 = () => {
 	);
 };
 
-export default HlsPlayerV2;
+export default Player;

@@ -1,4 +1,4 @@
-import { Autocomplete, MenuItem, TextField } from "@mui/material";
+import { Autocomplete, TextField } from "@mui/material";
 import React, { useState } from "react";
 import { useHLSConfigurationContext } from "../context/HLSConfigurationContext";
 import { HLSMediaSource, KNOWN_SOURCES } from "../sources";

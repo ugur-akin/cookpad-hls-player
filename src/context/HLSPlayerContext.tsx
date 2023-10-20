@@ -102,14 +102,18 @@ interface HLSPlayerContext {
 	bufferedStart: number;
 	bufferedEnd: number;
 	recentlyInteracted: boolean;
+	qualityLevels: [number, string][];
+	selectedLevel: number;
 	playVideo: () => void;
 	pauseVideo: () => void;
 	rw10: () => void;
 	ff10: () => void;
 	seekToPos: (pos: number) => void;
 	triggerInteraction: () => void;
+	switchLevels: (l: number) => void;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 const HLSPlayerContext = createContext<HLSPlayerContext | null>(null);
 
 export const HLSPlayerContextProvider: React.FC<PropsWithChildren> = ({
@@ -122,6 +126,8 @@ export const HLSPlayerContextProvider: React.FC<PropsWithChildren> = ({
 	const [currentTime, setCurrentTime] = useState(0);
 	const [bufferedStart, setBufferedStart] = useState(0);
 	const [bufferedEnd, setBufferedEnd] = useState(0);
+	const [qualityLevels, setQualityLevels] = useState<[number, string][]>([]);
+	const [selectedLevel, setSelectedLevel] = useState(-1);
 
 	const [recentlyInteracted, setRecentlyInteracted] = useState(false);
 	const [latestInteractionDate, setLatestInteractionDate] = useState(0);
@@ -175,6 +181,19 @@ export const HLSPlayerContextProvider: React.FC<PropsWithChildren> = ({
 	const ff10 = () => seekToRelativePos(10);
 	const rw10 = () => seekToRelativePos(-10);
 
+	const switchLevels = (level: number) => {
+		const isValidLevel = Boolean(
+			qualityLevels.find(([code, _]) => code === level)
+		);
+		if (isValidLevel) {
+			hls.currentLevel = level;
+
+			// We eagerly update level here too (it's also updated by listening to hls events)
+			//	as in some cases hls level won't be changed for a long time (i.e. when paused)
+			setSelectedLevel(level);
+		}
+	};
+
 	const contextValue = {
 		hls,
 		mediaEl,
@@ -185,12 +204,15 @@ export const HLSPlayerContextProvider: React.FC<PropsWithChildren> = ({
 		bufferedStart,
 		bufferedEnd,
 		recentlyInteracted,
+		qualityLevels,
+		selectedLevel,
 		playVideo,
 		pauseVideo,
 		ff10,
 		rw10,
 		seekToPos,
 		triggerInteraction,
+		switchLevels,
 	};
 
 	// Attaches media whenever a new mediaElement is mounted
@@ -250,10 +272,31 @@ export const HLSPlayerContextProvider: React.FC<PropsWithChildren> = ({
 			setCurrentTime(0);
 			setBufferedStart(0);
 			setBufferedEnd(0);
+			setQualityLevels([]);
+			setSelectedLevel(-1);
 			triggerInteraction();
 		};
 
 		hls.loadSource(mediaSource.source);
+		hls.on(Hls.Events.MANIFEST_LOADED, (_, { levels }) => {
+			const auto = [-1, "Auto"] as [number, string];
+
+			const detected = levels
+				.map((level, i) => [i, `${level.height}p`] as [number, string])
+				.sort(([_a, a], [_b, b]) => {
+					const aAsHeight = parseInt(a.substring(0, a.length - 1));
+					const bAsHeight = parseInt(b.substring(0, b.length - 1));
+
+					return bAsHeight - aAsHeight;
+				});
+
+			setQualityLevels([auto, ...detected]);
+			setSelectedLevel(hls.currentLevel);
+		});
+
+		hls.on(Hls.Events.LEVEL_SWITCHED, (_, data) => {
+			setSelectedLevel(data.level);
+		});
 		resetPlayer();
 	}, [mediaSource]);
 

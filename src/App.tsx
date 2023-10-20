@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Container, Paper, Typography } from "@mui/material";
 import CookpadAppBar from "./header/CookpadAppBar";
-import HlsPlayerV2 from "./player/HlsPlayerV2";
+import Player from "./player/Player";
 import { MediaSourceSelector } from "./config/MediaSourceSelector";
 
 function App() {
@@ -30,7 +30,7 @@ function App() {
 							alignItems: "center",
 						}}
 					>
-						<HlsPlayerV2 />
+						<Player />
 					</Box>
 				</Paper>
 			</Container>

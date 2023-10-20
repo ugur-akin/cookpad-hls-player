@@ -96,6 +96,7 @@ export const ProgressSlider: React.FC = () => {
 		if (!isDragging && !isSliderSyncing) {
 			setIsSliderSyncing(true);
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [currentTime]);
 
 	// -- Width/left ratios --
